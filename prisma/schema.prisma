@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  applications  Application[]
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum ApplicationStatus {
+  WISHLIST
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  userId          String
+  company         String
+  position        String
+  location        String?
+  salaryMin       Int?
+  salaryMax       Int?
+  status          ApplicationStatus @default(WISHLIST)
+  applicationDate DateTime?
+  deadline        DateTime?
+  followUpDate    DateTime?
+  url             String?
+  notes           String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  lastSyncedAt    DateTime          @default(now())
+  version         Int               @default(1)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts Contact[]
+  documents Document[]
+
+  @@index([userId, status])
+  @@index([userId, updatedAt])
+  @@map("applications")
+}
+
+model Contact {
+  id            String   @id @default(cuid())
+  applicationId String
+  name          String
+  email         String?
+  phone         String?
+  role          String?
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  applicationId String
+  name          String
+  type          String
+  url           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model SyncQueue {
+  id        String   @id @default(cuid())
+  userId    String
+  operation String
+  entity    String
+  entityId  String
+  data      Json
+  timestamp DateTime @default(now())
+  synced    Boolean  @default(false)
+  retryCount Int     @default(0)
+  error     String?  @db.Text
+
+  @@index([userId, synced])
+  @@index([timestamp])
+  @@map("sync_queue")
+}
