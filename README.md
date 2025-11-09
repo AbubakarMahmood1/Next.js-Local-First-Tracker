@@ -1,147 +1,329 @@
-# Next.js-Local-First-Tracker
-I need you to create a CLAUDE.md file for building a local-first job application tracker using Next.js 14+, TypeScript, and modern browser storage APIs.
+# 🎯 Next.js Local-First Job Tracker
 
-Project Concept:
-A job application tracker that works offline-first, syncs when online, and helps developers manage their job search with a beautiful, responsive UI. This demonstrates modern frontend architecture and state management.
+A modern, **offline-first** job application tracker built with Next.js 14+ that works seamlessly whether you're online or offline. Track your job applications, manage interviews, and never lose your data—even without an internet connection.
 
-Tech Stack:
-- Next.js 14+ with App Router
-- TypeScript with strict mode
-- Prisma with PostgreSQL (for server)
-- IndexedDB via Dexie.js (for client)
-- TanStack Query for server state
-- Zustand for client state
-- Tailwind CSS + shadcn/ui components
-- React Hook Form + Zod validation
-- NextAuth.js for authentication
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14+-black.svg)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Core Features:
+## ✨ Features
 
-1. Application Tracking:
-   - Company, position, salary range, location
-   - Status workflow: Wishlist → Applied → Screening → Interview → Offer → Rejected
-   - Application date, deadline, follow-up dates
-   - Notes, contacts, interview questions
-   - Document attachments (store references, not files)
+### 📊 Application Management
+- **Comprehensive Tracking**: Company, position, salary range, location, and status
+- **Smart Workflow**: Wishlist → Applied → Screening → Interview → Offer → Rejected
+- **Timeline Management**: Application dates, deadlines, and follow-up reminders
+- **Rich Details**: Notes, contacts, interview questions, and document references
 
-2. Local-First Architecture:
-   - All data works offline using IndexedDB
-   - Optimistic updates with rollback on failure
-   - Background sync when connection returns
-   - Conflict resolution using last-write-wins + client timestamps
-   - Queue failed operations for retry
+### 🔄 Local-First Architecture
+- **True Offline Support**: All features work without internet using IndexedDB
+- **Optimistic Updates**: Instant UI feedback with automatic rollback on errors
+- **Background Sync**: Seamlessly syncs when connection returns
+- **Conflict Resolution**: Last-write-wins strategy with client-side timestamps
+- **Retry Queue**: Failed operations automatically retry with exponential backoff
 
-3. Views and Filters:
-   - Kanban board (drag-drop between statuses)
-   - Table view with sorting/filtering
-   - Calendar view for interviews/deadlines
-   - Statistics dashboard (response rate, time in stage, etc.)
+### 🎨 Multiple Views
+- **Kanban Board**: Drag-and-drop applications between status columns
+- **Table View**: Sortable, filterable data grid for power users
+- **Calendar View**: Visualize interviews and deadlines at a glance
+- **Analytics Dashboard**: Track response rates, time-in-stage, and application trends
 
-4. Smart Features:
-   - Auto-save every change locally
-   - Bulk actions (archive old applications)
-   - Quick templates for follow-up emails
-   - Export data to CSV/JSON
-   - Keyboard shortcuts for power users
+### 🚀 Power Features
+- **Auto-save**: Every change is saved locally in real-time
+- **Bulk Operations**: Archive or update multiple applications at once
+- **Quick Templates**: Pre-written follow-up email templates
+- **Data Export**: Export your data to CSV or JSON
+- **Keyboard Shortcuts**: Navigate and manage applications efficiently
+- **Dark Mode**: Easy on the eyes during late-night job searches
 
-Data Sync Strategy:
+## 🛠 Tech Stack
+
+### Frontend
+- **[Next.js 14+](https://nextjs.org/)** - React framework with App Router
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development with strict mode
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first styling
+- **[shadcn/ui](https://ui.shadcn.com/)** - Beautiful, accessible components
+
+### State Management
+- **[Zustand](https://zustand-demo.pmnd.rs/)** - Lightweight client state management
+- **[TanStack Query](https://tanstack.com/query)** - Server state synchronization
+- **[Dexie.js](https://dexie.org/)** - IndexedDB wrapper for local storage
+
+### Backend & Database
+- **[Prisma](https://www.prisma.io/)** - Type-safe ORM
+- **[PostgreSQL](https://www.postgresql.org/)** - Relational database
+- **[NextAuth.js](https://next-auth.js.org/)** - Authentication solution
+
+### Forms & Validation
+- **[React Hook Form](https://react-hook-form.com/)** - Performant form management
+- **[Zod](https://zod.dev/)** - TypeScript-first schema validation
+
+## 🏗 Architecture
+
+### Local-First Design Pattern
+
 ```typescript
-// Pseudo-code for sync strategy
-interface SyncOperation {
-  id: string
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
-  entity: 'application' | 'note' | 'contact'
-  data: any
-  timestamp: number
-  synced: boolean
-}
-
-// 1. Every operation goes to IndexedDB first
-// 2. Queue operation for sync
-// 3. Batch sync when online
-// 4. Handle conflicts with server
+// Every operation follows this pattern:
+1. Update IndexedDB immediately (offline-first)
+2. Queue sync operation
+3. Update UI optimistically
+4. Sync to server when online
+5. Resolve conflicts if any
 ```
 
-Component Architecture:
+### Sync Engine Strategy
+
+```typescript
+interface SyncOperation {
+  id: string;
+  type: 'CREATE' | 'UPDATE' | 'DELETE';
+  entity: 'application' | 'note' | 'contact';
+  data: any;
+  timestamp: number;
+  synced: boolean;
+  retryCount: number;
+}
+
+// Sync process:
+// 1. All operations write to IndexedDB first
+// 2. Operations queued in sync store
+// 3. Batch sync when online (max 50 ops)
+// 4. Server validates and resolves conflicts
+// 5. Client updates with server truth
+```
+
+### Project Structure
+
+```
 src/
 ├── app/
-│   ├── (auth)/
+│   ├── (auth)/              # Authentication routes
 │   │   ├── login/
 │   │   └── register/
-│   ├── (dashboard)/
-│   │   ├── applications/
-│   │   ├── calendar/
-│   │   ├── settings/
-│   │   └── layout.tsx
+│   ├── (dashboard)/         # Main application
+│   │   ├── applications/    # Application management
+│   │   ├── calendar/        # Calendar view
+│   │   ├── analytics/       # Statistics dashboard
+│   │   ├── settings/        # User preferences
+│   │   └── layout.tsx       # Dashboard layout
 │   └── api/
-│       └── sync/
+│       ├── sync/            # Sync endpoints
+│       └── applications/    # CRUD endpoints
+│
 ├── components/
 │   ├── applications/
 │   │   ├── ApplicationCard.tsx
 │   │   ├── ApplicationForm.tsx
-│   │   └── KanbanBoard.tsx
-│   └── ui/ (shadcn components)
+│   │   ├── KanbanBoard.tsx
+│   │   └── TableView.tsx
+│   ├── calendar/
+│   │   └── CalendarView.tsx
+│   └── ui/                  # shadcn components
+│
 ├── lib/
 │   ├── db/
-│   │   ├── indexed-db.ts
-│   │   └── prisma.ts
+│   │   ├── indexed-db.ts    # IndexedDB schema
+│   │   └── prisma.ts        # Prisma client
 │   ├── sync/
-│   │   ├── sync-engine.ts
-│   │   └── conflict-resolver.ts
+│   │   ├── sync-engine.ts   # Core sync logic
+│   │   ├── conflict-resolver.ts
+│   │   └── queue-manager.ts
 │   └── stores/
 │       ├── application-store.ts
 │       └── sync-store.ts
+│
 └── hooks/
-├── useOfflineSync.ts
-├── useApplications.ts
-└── useKeyboardShortcuts.ts
+    ├── useOfflineSync.ts
+    ├── useApplications.ts
+    ├── useKeyboardShortcuts.ts
+    └── useNetworkStatus.ts
+```
 
-Key Technical Challenges to Solve:
+## 🚦 Getting Started
 
-1. Offline Detection:
-   - Navigator.onLine API
-   - Periodic ping to ensure real connectivity
-   - Visual indicator of offline/syncing/synced state
+### Prerequisites
 
-2. Data Persistence:
-   - IndexedDB for structured data
-   - LocalStorage for user preferences
-   - SessionStorage for temporary form data
+- **Node.js** 18.x or higher
+- **PostgreSQL** 14.x or higher
+- **pnpm** (recommended) or npm
 
-3. Sync Queue:
-   - Maintain order of operations
-   - Retry with exponential backoff
-   - Batch operations for efficiency
-   - Show sync progress to user
+### Installation
 
-4. Performance:
-   - Virtual scrolling for large lists
-   - Lazy load routes
-   - Optimize bundle size
-   - Use React.memo strategically
-   - Implement pagination even for local data
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/Next.js-Local-First-Tracker.git
+cd Next.js-Local-First-Tracker
 
-UI/UX Requirements:
-- Clean, professional design using shadcn/ui
-- Dark mode support
-- Mobile responsive (actually test on phone)
-- Loading skeletons, not spinners
-- Optimistic UI updates everywhere
-- Inline editing where appropriate
-- Undo/redo for critical operations
+# Install dependencies
+pnpm install
 
-Testing Strategy:
-- Unit tests for sync logic
-- Integration tests for API routes
-- E2E tests with Playwright for critical flows
-- Test offline scenarios explicitly
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your database credentials
 
-Common Pitfalls to Avoid:
-- Don't sync on every keystroke (debounce)
-- Don't store sensitive data in localStorage
-- Don't trust client timestamps alone
-- Don't show sync errors as blocking modals
-- Don't forget to cleanup IndexedDB
-- Don't make offline mode feel "degraded"
+# Set up the database
+pnpm db:push
 
-Create a comprehensive CLAUDE.md that explains the local-first architecture, provides complete code examples for the sync engine, demonstrates proper TypeScript patterns, and includes strategies for testing offline scenarios. Focus on making the offline experience feel as smooth as online.
+# Run database migrations
+pnpm db:migrate
+
+# Start the development server
+pnpm dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to see the application.
+
+### Environment Variables
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/jobtracker"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+
+# OAuth Providers (optional)
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+```
+
+## 🧪 Testing
+
+```bash
+# Run unit tests
+pnpm test
+
+# Run integration tests
+pnpm test:integration
+
+# Run E2E tests
+pnpm test:e2e
+
+# Test offline scenarios
+pnpm test:offline
+
+# Run all tests with coverage
+pnpm test:coverage
+```
+
+### Testing Offline Functionality
+
+The project includes specific tests for offline scenarios:
+
+```bash
+# Simulate offline mode
+pnpm test:offline
+
+# Test sync conflict resolution
+pnpm test:sync
+```
+
+## 🎯 Key Technical Highlights
+
+### 1. Offline Detection
+- Uses `navigator.onLine` API with periodic server pings
+- Visual indicators for offline/syncing/synced states
+- Graceful degradation of online-only features
+
+### 2. Data Persistence Strategy
+- **IndexedDB** (via Dexie.js) - Application data, sync queue
+- **localStorage** - User preferences, UI state
+- **sessionStorage** - Temporary form data, draft state
+
+### 3. Sync Queue Management
+- Maintains operation order with timestamps
+- Exponential backoff retry (1s, 2s, 4s, 8s, 16s)
+- Batch operations for network efficiency
+- Real-time progress indicators
+
+### 4. Performance Optimizations
+- Virtual scrolling for large application lists
+- Route-based code splitting
+- Strategic use of `React.memo` and `useMemo`
+- Optimized bundle size with tree-shaking
+- Pagination for local data (100 items per page)
+
+## 💡 Development Best Practices
+
+### Avoid Common Pitfalls
+
+✅ **DO:**
+- Debounce sync operations (500ms minimum)
+- Use server timestamps as source of truth
+- Show sync errors as non-blocking notifications
+- Cleanup IndexedDB periodically
+- Make offline mode feel seamless
+
+❌ **DON'T:**
+- Sync on every keystroke
+- Store sensitive data in localStorage
+- Trust client timestamps alone
+- Block UI with sync error modals
+- Let IndexedDB grow unbounded
+
+### Code Quality
+- **TypeScript strict mode** enabled
+- **ESLint** with recommended rules
+- **Prettier** for consistent formatting
+- **Husky** for pre-commit hooks
+- **Conventional Commits** for clear history
+
+## 🎨 UI/UX Principles
+
+- **Clean & Professional**: Minimal, focused design
+- **Dark Mode**: Automatic theme switching
+- **Mobile First**: Fully responsive on all devices
+- **Loading States**: Skeleton screens, not spinners
+- **Optimistic UI**: Instant feedback everywhere
+- **Inline Editing**: Quick updates without modal dialogs
+- **Undo/Redo**: For critical operations
+
+## 📈 Roadmap
+
+- [ ] Mobile apps (React Native)
+- [ ] Chrome extension for quick adds
+- [ ] AI-powered resume matching
+- [ ] Email integration for auto-tracking
+- [ ] Team collaboration features
+- [ ] Interview preparation tools
+- [ ] Salary negotiation insights
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+```bash
+# Fork the repository
+# Create your feature branch
+git checkout -b feature/amazing-feature
+
+# Commit your changes
+git commit -m 'Add some amazing feature'
+
+# Push to the branch
+git push origin feature/amazing-feature
+
+# Open a Pull Request
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [shadcn](https://twitter.com/shadcn) for the amazing UI components
+- [Dexie.js](https://dexie.org/) team for the excellent IndexedDB wrapper
+- [Vercel](https://vercel.com) for the Next.js framework
+- The open-source community for inspiration and tools
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/Next.js-Local-First-Tracker/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/Next.js-Local-First-Tracker/discussions)
+- **Twitter**: [@yourhandle](https://twitter.com/yourhandle)
+
+---
+
+<p align="center">Made with ❤️ by developers, for developers</p>
+<p align="center">⭐ Star this repo if you find it helpful!</p>
