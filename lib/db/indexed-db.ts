@@ -114,7 +114,7 @@ export const dbHelpers = {
 
   // Get unsynced operations
   async getUnsyncedOperations(): Promise<SyncOperation[]> {
-    return await db.syncQueue.where("synced").equals(false).toArray();
+    return await db.syncQueue.where("synced").equals(0).toArray();
   },
 
   // Mark operation as synced

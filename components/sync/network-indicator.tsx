@@ -3,11 +3,11 @@
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useSyncStore } from "@/lib/stores/sync-store";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff, Cloud, CloudOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Wifi, WifiOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function NetworkIndicator() {
   const { isOnline, isChecking } = useNetworkStatus();
-  const { syncStatus, syncError } = useSyncStore();
+  const { syncStatus } = useSyncStore();
 
   if (isChecking) {
     return (

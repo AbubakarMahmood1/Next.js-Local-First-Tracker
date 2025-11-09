@@ -15,7 +15,7 @@ interface SyncStore {
   pullFromServer: (userId: string) => Promise<void>;
 }
 
-export const useSyncStore = create<SyncStore>((set, get) => ({
+export const useSyncStore = create<SyncStore>((set) => ({
   isOnline: typeof window !== "undefined" ? navigator.onLine : true,
   syncStatus: "idle",
   syncProgress: 0,
